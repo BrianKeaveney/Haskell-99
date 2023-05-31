@@ -2,6 +2,8 @@
 module Main where
 import Data.Foldable (Foldable(foldl))
 import Data.List
+import Text.ParserCombinators.ReadP (endBy)
+import System.Random
 
 main :: IO ()
 main = putStrLn $ show $ mylast [1,2,3,4,5] 
@@ -151,4 +153,54 @@ removeAt' list index
         helper (elem:rest) acc idx = helper rest (elem:acc) $ idx-1
 
 -- 20 Done and Dusted!!
+
+insertAt :: a -> [a] -> Int -> [a]
+insertAt elm [] _ = [elm]
+insertAt elm list 1 = elm : list
+insertAt elm (current:rest) index = current : insertAt elm rest (index -1)
+
+range :: Int -> Int -> [Int]
+range s e
+   | s == e = [e]
+   | otherwise = s : range (s+1) e
+        
+---------------------------------------
+
+getRandomIndexList :: (Int, Int) -> Int -> [Int]
+getRandomIndexList range count = getRandom range count [] $ mkStdGen 137
+    where
+        inList _ [] = False
+        inList num (elm:rest) = if num == elm then True else inList num rest
+        getRandom _ 0 list _ = list
+        getRandom range count list rnd =
+            let (randValue, g) = uniformR range rnd
+            in 
+                if inList randValue list
+                    then getRandom range count list g
+                else
+                    getRandom range (count -1) (randValue : list) g
+
+rndSelect :: [a] -> Int -> [a]
+rndSelect list n = map snd . filter (\(idx, elm) -> inList idx $ getRandomIndexList (1, length list) n). zip [1..] $ list
+    where 
+        inList _ [] = False
+        inList num (elm:rest) = if num == elm then True else inList num rest
+ 
+---------------------------------------------------------------------
+
+-- solution to use getRandomIndexList below as well works
+diffSelect :: Int -> Int -> [Int]
+diffSelect range len =
+    take range . nub . unfoldr (Just . uniformR (1, len)) $ mkStdGen 100
+    -- getRandomIndexList (1, len) range
+
+rndPermu :: [a] -> [a]
+rndPermu list = map (list!!) . getRandomIndexList(0, listLength -1) $ listLength
+-- rndPermu list = map (list!!) . diffSelect listLength $ (listLength -1)
+    where listLength = length list
+
+
+combinations :: Int -> [a] -> [a]
+combinations num list = undefined -- come back to this!! 
+
 
